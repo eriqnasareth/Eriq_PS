@@ -4,31 +4,174 @@ title: "Modelo Projeto - Quarto"
 # Nome do documento PDF gerado
 output-file: titulo do projeto
 ---
+
+# Padronizações
+
 ```{r}
 #| include: false
 source("rdocs/source/packages.R")
 ```
 
+
+Pacotes:
+
 ```{r}
-# Rodar apenas uma vez na vida!
-## Instalando o tinytex(pacote apenas)
-### CRAN version
-install.packages('tinytex')
+library(pacman)
+pacman::p_load(tidyverse, knitr)
 
-### or the development version on GitHub
-remotes::install_github('rstudio/tinytex')
-
-## Baixando o tinytex
-library(tinytex)
-tinytex::install_tinytex()
 ```
 
+
+Tabela carregada
+
+```{r}
+df <- readxl::read_xlsx("C:\\Users\\Eriq\\Desktop\\Projects\\Ps estat\\Olimpiadas 2000 - 2016.xlsx")
+```
+
+
+Apenas medalhistas:
+
+```{r}
+df <- df %>%
+  filter(!is.na(Medal))
+```
 
 
 # Introdução
 
+?
+
 # Referencial Teórico
+
+?
 
 # Análises
 
+## 1 (sem padronização)
+
+
+```{r}
+
+# crio novo banco de dados para mulheres medalhistas, alem disso, agrupo por equipes e faco a frequencia para cada um de forma ordenada e ficando apenas os 5 primeiros.
+
+top_mulheres_pais <- df %>% 
+  filter(Gender == "F") %>% 
+  group_by(Team) %>%
+  count(sort = T) %>%
+  head(n = 5) 
+
+#plot utilizando fct_reorder para nao ser plotado um grafico em ordem alfabetica no lugar de ordenado por mais medalhas.
+
+top_mulheres_pais %>%
+  ggplot(aes(x = fct_reorder(Team, n, .desc = T), y = n, fill = fct_reorder(Team, n, .desc = T))) +
+  geom_col() +
+  labs(y = "Quantidade de medalhistas", x = "País medalhista", fill = "Países") +
+  theme_estat()
+
+```
+
+## 2. Valor IMC por esporte, estes sendo, ginástica, futebol, judô, atletismo e badminton (20/10)
+
+```{r}
+
+imc_calculado <- df %>%
+  select(Sport, `Height (cm)`, `Weight (lbs)`) %>%
+  mutate(imc = `Height (cm)` / `Weight (lbs)`) %>%
+  filter(Sport %in% c("Gymnastics", "Judo", "Athletics", "Badminton"))
+
+df <- df %>%
+  mutate(imc = round(`Height (cm)` / `Weight (lbs)`, 2))
+
+```
+
+Quantidade de "na's" nas variaveis de altura e peso respectivamente
+
+```{r}
+
+sum(is.na(imc_calculado$`Height (cm)`))
+```
+
+```{r}
+
+sum(is.na(imc_calculado$`Weight (lbs)`))
+```
+
+Como a quantidade de "na's" é muito pequena, os "na's" serão considerados um evento aleatório e as linhas serão removidas.
+
+```{r}
+imc_calculado <- na.omit(imc_calculado)
+```
+
+```{r}
+
+imc_calculado %>%
+  group_by(Sport) %>%
+  summarise(media = round(mean(imc), 2), variancia = round(var(imc), 2), mediana = round(median(imc), 2)) %>%
+  arrange(media) %>%
+  kable()
+
+```
+
+```{r}
+
+imc_calculado %>%
+  ggplot(aes(x = reorder(Sport, imc, FUN = median, decreasing = T), y = imc, fill = reorder(Sport, imc, FUN = median, decreasing = T))) +
+  geom_boxplot() +
+  theme_estat() +
+  labs(y = "IMC", x = "Esporte", fill = "Esporte")
+  
+```
+
+## 3. Top 3 medalhistas gerais por quantidade de cada tipo de medalha (27/10)
+
+
+```{r}
+df <- df %>%
+  mutate(Medal_value = case_when(
+    Medal == "Gold" ~ 3,
+    Medal == "Silver" ~ 2,
+    Medal == "Bronze" ~ 1
+  ))
+```
+
+
+
+
+```{r}
+
+top_medalhistas <- df %>%
+  group_by(Names) %>%
+  summarise(n = n(), ) %>%
+  arrange(desc(n)) %>%
+  head()
+
+
+```
+
+
+```{r}
+
+top_nomes <- top_medalhistas %>%
+  filter(n == 4) %>%
+  select(Names) %>%
+  as_vector()
+
+terceiro <- df %>%
+  filter(Names %in% top_nomes) %>%
+  group_by(Names) %>%
+  summarise(Medal_value = sum(Medal_value)) %>%
+  arrange(desc(Medal_value)) %>%
+  head(1) %>%
+  select(Names) 
+
+```
+
+
+
+
+
+
+
 # Conclusões
+
+?
