@@ -5,13 +5,8 @@ title: "House of Excellence"
 output-file: titulo do projeto
 ---
 
-# Mudanças que estou ciente:
 
-## Ajeitar a planilha, estava usando apenas uma aba do banco de dados, agora vou juntar todas em uma só e transformar em apenas uma com as mesmas variáveis.
-
-## Não sei se todas as questões de fontes e cores estão corretas, gostaria de saber se tem algo que estou fazendo errado e que o pacote da estat não cobre e preciso fazer manualmente.
-
-## Suponde que o banco de dados estivesse correto, essa seria uma solução razoável para a questão 1?
+# Não sei se todas as questões de fontes e cores estão corretas, gostaria de saber se tem algo que estou fazendo errado e que o pacote da estat não cobre e preciso fazer manualmente.
 
 
 
@@ -48,12 +43,16 @@ pacman::p_load(tidyverse, knitr, readxl)
 #Tabela carregada
 
 my_path = "C:\\Users\\Eriq\\Desktop\\Projects\\Ps estat\\Olimpiadas 2000 - 2016.xlsx"
-df <- excel_sheets(my_path) %>%
-  map_df(~read_xlsx(my_path,.))
+sheet_names <- excel_sheets(my_path)
+df <- lapply(sheet_names, function(sheet){
+  data <- read_excel(my_path, sheet = sheet)
+  colnames(data) <- c("Names", "Gender",       "Age",          "Height (cm)" , "Weight (lbs)", "Team",         "Sport" ,       "Event"  ,      "Medal")
+  return(data)
+})
+
+df <- bind_rows(df)
+
 ```
-
-
-
 
 
 ```{r}
@@ -98,14 +97,15 @@ top_mulheres_pais <- df %>%
 #plot utilizando fct_reorder para nao ser plotado um grafico em ordem alfabetica no lugar de ordenado por mais medalhas.
 
 top_mulheres_pais %>%
-  ggplot(aes(x = fct_reorder(Team, n, .desc = T), y = n, fill = Team[1])) +
+  ggplot(aes(x = fct_reorder(Team, n, .desc = T), y = n, fill = cores_estat[1])) +
   geom_col() +
-  labs(y = "Quantidade de medalhistas", x = "País medalhista") +
-  theme_estat()
+  labs(y = "Quantidade de medalhistas femininas", x = "País", title = "Top 5 mulheres medalhistas") +
+  theme_estat() + 
+  guides(fill="none")
 
 ```
 
-
+É possível observar, pela (adicionar o endereço da figura) que os Estados Unidos estão na frente com uma vantagem esmagadora em comparação à equipe mais próxima (Rússia), tendo quase o dobro de medalhas conquistadas pelas mulheres de sua equipe. Em constraste com a primeira equipe colocada, as outras 4 equipes que estão no topo, tem número de medalhas muito próximas entre si.
 
 
 
