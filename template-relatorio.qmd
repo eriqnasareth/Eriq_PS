@@ -1,11 +1,28 @@
 ---
-title: "Modelo Projeto - Quarto"
+title: "House of Excellence"
 
 # Nome do documento PDF gerado
 output-file: titulo do projeto
 ---
 
+# Mudanças que estou ciente:
+
+## Ajeitar a planilha, estava usando apenas uma aba do banco de dados, agora vou juntar todas em uma só e transformar em apenas uma com as mesmas variáveis.
+
+## Não sei se todas as questões de fontes e cores estão corretas, gostaria de saber se tem algo que estou fazendo errado e que o pacote da estat não cobre e preciso fazer manualmente.
+
+## Suponde que o banco de dados estivesse correto, essa seria uma solução razoável para a questão 1?
+
+
+
+
+
+```{r}
+#| include: false
 # Padronizações
+```
+
+
 
 ```{r}
 #| include: false
@@ -13,25 +30,37 @@ source("rdocs/source/packages.R")
 ```
 
 
-Pacotes:
+
 
 ```{r}
+#Pacotes:
+
+#| include: false
 library(pacman)
-pacman::p_load(tidyverse, knitr)
+pacman::p_load(tidyverse, knitr, readxl)
 
 ```
 
 
-Tabela carregada
-
 ```{r}
-df <- readxl::read_xlsx("C:\\Users\\Eriq\\Desktop\\Projects\\Ps estat\\Olimpiadas 2000 - 2016.xlsx")
+#| include: false
+
+#Tabela carregada
+
+my_path = "C:\\Users\\Eriq\\Desktop\\Projects\\Ps estat\\Olimpiadas 2000 - 2016.xlsx"
+df <- excel_sheets(my_path) %>%
+  map_df(~read_xlsx(my_path,.))
 ```
 
 
-Apenas medalhistas:
+
+
 
 ```{r}
+
+# Apenas medalhistas:
+
+#| include: false
 df <- df %>%
   filter(!is.na(Medal))
 ```
@@ -39,7 +68,13 @@ df <- df %>%
 
 # Introdução
 
-?
+  O seguinte projeto tem como objetivo trazer uma análise descritiva e exploratória de dados fornecidos pela "House of Excellence", visando otimizar o desempenho de seus atletas.
+  
+  O banco de dados conta com 9 variáveis e  67.474 observações, sendo as mais importantes (tirando as informações básicas de cada atleta, como nome, peso e altura); "Sport": Esporte praticado pelo atleta, "Event": Nome do evento esportivo que o atleta participou, "Medal": medalha adiquirida pelo atleta na competição.
+  
+  Todas as analises foram feitas utilizando o software RStudio
+  
+
 
 # Referencial Teórico
 
@@ -47,7 +82,7 @@ df <- df %>%
 
 # Análises
 
-## 1 (sem padronização)
+## Top 5 países com maior número de mulheres medalhistas
 
 
 ```{r}
@@ -63,12 +98,17 @@ top_mulheres_pais <- df %>%
 #plot utilizando fct_reorder para nao ser plotado um grafico em ordem alfabetica no lugar de ordenado por mais medalhas.
 
 top_mulheres_pais %>%
-  ggplot(aes(x = fct_reorder(Team, n, .desc = T), y = n, fill = fct_reorder(Team, n, .desc = T))) +
+  ggplot(aes(x = fct_reorder(Team, n, .desc = T), y = n, fill = Team[1])) +
   geom_col() +
-  labs(y = "Quantidade de medalhistas", x = "País medalhista", fill = "Países") +
+  labs(y = "Quantidade de medalhistas", x = "País medalhista") +
   theme_estat()
 
 ```
+
+
+
+
+
 
 ## 2. Valor IMC por esporte, estes sendo, ginástica, futebol, judô, atletismo e badminton (20/10)
 
@@ -102,42 +142,45 @@ Como a quantidade de "na's" é muito pequena, os "na's" serão considerados um e
 imc_calculado <- na.omit(imc_calculado)
 ```
 
-```{r}
+{r}
 
-imc_calculado %>%
+tabela1 <- imc_calculado %>%
   group_by(Sport) %>%
-  summarise(media = round(mean(imc), 2), variancia = round(var(imc), 2), mediana = round(median(imc), 2)) %>%
-  arrange(media) %>%
-  kable()
+  summarise(media = round(mean(imc), 2), variancia = round(var(imc), 2), mediana = round(median(imc), 2))
 
-```
+tabela1 %>%
+  ggplot(aes(x = "Sport", y = "media")) +
+  geom_col() +
+  theme_estat()
 
-```{r}
+
+
+{r}
 
 imc_calculado %>%
-  ggplot(aes(x = reorder(Sport, imc, FUN = median, decreasing = T), y = imc, fill = reorder(Sport, imc, FUN = median, decreasing = T))) +
+  ggplot(aes(x = reorder(Sport, imc, FUN = median, decreasing = T), y = imc, fill = Sport[1])) +
   geom_boxplot() +
   theme_estat() +
   labs(y = "IMC", x = "Esporte", fill = "Esporte")
   
-```
+
 
 ## 3. Top 3 medalhistas gerais por quantidade de cada tipo de medalha (27/10)
 
 
-```{r}
+{r}
 df <- df %>%
   mutate(Medal_value = case_when(
     Medal == "Gold" ~ 3,
     Medal == "Silver" ~ 2,
     Medal == "Bronze" ~ 1
   ))
-```
 
 
 
 
-```{r}
+
+{r}
 
 top_medalhistas <- df %>%
   group_by(Names) %>%
@@ -149,7 +192,7 @@ top_medalhistas <- df %>%
 ```
 
 
-```{r}
+{r}
 
 top_nomes <- top_medalhistas %>%
   filter(n == 4) %>%
@@ -165,8 +208,6 @@ terceiro <- df %>%
   select(Names) 
 
 ```
-
-
 
 
 
