@@ -5,27 +5,17 @@ title: "House of Excellence"
 output-file: titulo do projeto
 ---
 
-
 # Não sei se todas as questões de fontes e cores estão corretas, gostaria de saber se tem algo que estou fazendo errado e que o pacote da estat não cobre e preciso fazer manualmente.
-
-
-
-
 
 ```{r}
 #| include: false
 # Padronizações
 ```
 
-
-
 ```{r}
 #| include: false
 source("rdocs/source/packages.R")
 ```
-
-
-
 
 ```{r}
 #Pacotes:
@@ -35,7 +25,6 @@ library(pacman)
 pacman::p_load(tidyverse, knitr, readxl)
 
 ```
-
 
 ```{r}
 #| include: false
@@ -50,9 +39,21 @@ df <- lapply(sheet_names, function(sheet){
   return(data)
 })
 
+teste <- df
 df <- bind_rows(df)
 
 ```
+
+Alguns testes para debugar
+
+```{r}
+teste[[1]] %>%
+  group_by(Team) %>%
+  filter(Medal == "Gold", Gender == "M") %>%
+  distinct(Names)
+```
+
+
 
 
 ```{r}
@@ -64,16 +65,13 @@ df <- df %>%
   filter(!is.na(Medal))
 ```
 
-
 # Introdução
 
-  O seguinte projeto tem como objetivo trazer uma análise descritiva e exploratória de dados fornecidos pela "House of Excellence", visando otimizar o desempenho de seus atletas.
-  
-  O banco de dados conta com 9 variáveis e  67.474 observações, sendo as mais importantes (tirando as informações básicas de cada atleta, como nome, peso e altura); "Sport": Esporte praticado pelo atleta, "Event": Nome do evento esportivo que o atleta participou, "Medal": medalha adiquirida pelo atleta na competição.
-  
-  Todas as analises foram feitas utilizando o software RStudio
-  
+O seguinte projeto tem como objetivo trazer uma análise descritiva e exploratória de dados fornecidos pela "House of Excellence", visando otimizar o desempenho de seus atletas.
 
+O banco de dados conta com 9 variáveis e 67.474 observações, sendo as mais importantes (tirando as informações básicas de cada atleta, como nome, peso e altura); "Sport": Esporte praticado pelo atleta, "Event": Nome do evento esportivo que o atleta participou, "Medal": medalha adiquirida pelo atleta na competição.
+
+Todas as analises foram feitas utilizando o software RStudio
 
 # Referencial Teórico
 
@@ -82,7 +80,6 @@ df <- df %>%
 # Análises
 
 ## Top 5 países com maior número de mulheres medalhistas
-
 
 ```{r}
 
@@ -93,26 +90,29 @@ top_mulheres_pais <- df %>%
   group_by(Team) %>%
   count(sort = T) %>%
   head(n = 5) 
+```
 
+```{r}
 #plot utilizando fct_reorder para nao ser plotado um grafico em ordem alfabetica no lugar de ordenado por mais medalhas.
 
+#| label: top5women
+#| fig-cap: "Top5"  
+  
 top_mulheres_pais %>%
   ggplot(aes(x = fct_reorder(Team, n, .desc = T), y = n, fill = cores_estat[1])) +
   geom_col() +
   labs(y = "Quantidade de medalhistas femininas", x = "País", title = "Top 5 mulheres medalhistas") +
   theme_estat() + 
   guides(fill="none")
-
 ```
 
-É possível observar, pela (adicionar o endereço da figura) que os Estados Unidos estão na frente com uma vantagem esmagadora em comparação à equipe mais próxima (Rússia), tendo quase o dobro de medalhas conquistadas pelas mulheres de sua equipe. Em constraste com a primeira equipe colocada, as outras 4 equipes que estão no topo, tem número de medalhas muito próximas entre si.
+É possível observar, pela que @top5 os Estados Unidos estão na frente com uma vantagem esmagadora em comparação à equipe mais próxima (Rússia), tendo quase o dobro de medalhas conquistadas pelas mulheres de sua equipe. Em constraste com a primeira equipe colocada, as outras 4 equipes que estão no topo, tem número de medalhas muito próximas entre si.
 
-
-
-
-## 2. Valor IMC por esporte, estes sendo, ginástica, futebol, judô, atletismo e badminton (20/10)
+## Valor IMC por esporte, estes sendo, ginástica, futebol, judô, atletismo e badminton
 
 ```{r}
+
+#| include: false
 
 imc_calculado <- df %>%
   select(Sport, `Height (cm)`, `Weight (lbs)`) %>%
@@ -124,94 +124,46 @@ df <- df %>%
 
 ```
 
-Quantidade de "na's" nas variaveis de altura e peso respectivamente
-
 ```{r}
 
-sum(is.na(imc_calculado$`Height (cm)`))
-```
+#| include: false
+#Como a quantidade de "na's" é muito pequena, os "na's" serão considerados um evento aleatório e as linhas serão removidas.
 
-```{r}
-
-sum(is.na(imc_calculado$`Weight (lbs)`))
-```
-
-Como a quantidade de "na's" é muito pequena, os "na's" serão considerados um evento aleatório e as linhas serão removidas.
-
-```{r}
 imc_calculado <- na.omit(imc_calculado)
 ```
 
-{r}
+Foram analisadas: a variavel criada com nome de "IMC" onde o IMC foi calculado, sendo uma variavel contínua em relação a variavel "Sport" onde estão inclusos especificamente os esportes "Ginástica", "Atletismo", "Badminton" e "Judo".
+A idéia é identificar se os atletas possuem perfis de IMC diferentes de acordo com o esporte praticado.
 
-tabela1 <- imc_calculado %>%
-  group_by(Sport) %>%
-  summarise(media = round(mean(imc), 2), variancia = round(var(imc), 2), mediana = round(median(imc), 2))
+```{r}
 
-tabela1 %>%
-  ggplot(aes(x = "Sport", y = "media")) +
-  geom_col() +
-  theme_estat()
+imc_calculado %>% 
+  ggplot(aes(x = reorder(Sport, imc, FUN = median, decreasing = T), y = imc, fill = cores_estat[1])) + 
+  geom_boxplot() + 
+  theme_estat() + 
+  labs(y = "IMC", x = "Esporte", fill = "Esporte") + 
+  guides(fill="none")
 
 
+```
 
-{r}
+A partir do gráfico (estou tendo problemas de referenciar graficos), temos que diferentes esportes podem sim ter perfis diferentes de IMC, sendo que alguns podem ter uma menor variabilidade e uma quantidade mais concentrada em um valor enquanto outros esportes podem ter uma variabilidade maior e um perfil menos uniforme.
 
-imc_calculado %>%
-  ggplot(aes(x = reorder(Sport, imc, FUN = median, decreasing = T), y = imc, fill = Sport[1])) +
-  geom_boxplot() +
-  theme_estat() +
-  labs(y = "IMC", x = "Esporte", fill = "Esporte")
-  
+
 
 
 ## 3. Top 3 medalhistas gerais por quantidade de cada tipo de medalha (27/10)
-
-
-{r}
-df <- df %>%
-  mutate(Medal_value = case_when(
-    Medal == "Gold" ~ 3,
-    Medal == "Silver" ~ 2,
-    Medal == "Bronze" ~ 1
-  ))
-
-
-
-
+{r} df \<- df %\>% mutate(Medal_value = case_when( Medal == "Gold" \~ 3, Medal == "Silver" \~ 2, Medal == "Bronze" \~ 1 ))
 
 {r}
 
-top_medalhistas <- df %>%
-  group_by(Names) %>%
-  summarise(n = n(), ) %>%
-  arrange(desc(n)) %>%
-  head()
-
-
-```
-
+top_medalhistas \<- df %\>% group_by(Names) %\>% summarise(n = n(), ) %\>% arrange(desc(n)) %\>% head()
 
 {r}
 
-top_nomes <- top_medalhistas %>%
-  filter(n == 4) %>%
-  select(Names) %>%
-  as_vector()
+top_nomes \<- top_medalhistas %\>% filter(n == 4) %\>% select(Names) %\>% as_vector()
 
-terceiro <- df %>%
-  filter(Names %in% top_nomes) %>%
-  group_by(Names) %>%
-  summarise(Medal_value = sum(Medal_value)) %>%
-  arrange(desc(Medal_value)) %>%
-  head(1) %>%
-  select(Names) 
-
-```
-
-
-
-
+terceiro \<- df %\>% filter(Names %in% top_nomes) %\>% group_by(Names) %\>% summarise(Medal_value = sum(Medal_value)) %\>% arrange(desc(Medal_value)) %\>% head(1) %\>% select(Names)
 
 # Conclusões
 
